@@ -7,7 +7,7 @@ import (
 
 
 // Registers concrete types on wire codex
-func RegisterCodex(cdc *codec.Codec) {
+func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgSetName{}, "nameservice/SetName", nil)
 	cdc.RegisterConcrete(MsgBuyName{}, "nameservice/BuyName", nil)
 }

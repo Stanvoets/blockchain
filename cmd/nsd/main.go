@@ -40,7 +40,7 @@ const (
 func main(){
 	cobra.EnableCommandSorting = false
 
-	cdc := app.MakeCodex()
+	cdc := app.MakeCodec()
 	ctx := server.NewDefaultContext()
 
 	rootCmd := &cobra.Command{
@@ -61,7 +61,7 @@ func main(){
 	}
 }
 
-func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
+func newApp(logger log.Logger, db dbm.DB, _ io.Writer) abci.Application {
 	return app.NewNameServiceApp(logger, db)
 }
 
@@ -199,7 +199,6 @@ func SimpleAppGenTx(cdc *codec.Codec, pk crypto.PubKey) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
 
 	addr, secret, err := server.GenerateCoinKey()
-	+
 	if err != nil {
 		return
 	}

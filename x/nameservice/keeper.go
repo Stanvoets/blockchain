@@ -40,11 +40,11 @@ func (k Keeper) SetWhois(ctx sdk.Context, name string, whois Whois) {
 
 // Gets the entire Whois metadata struct for a name
 func (k Keeper) GetWhois(ctx sdk.Context, name string) Whois {
-	store := ctx.KVStore(k.storekey)
-	if !store.has([]byte(name)) {
+	store := ctx.KVStore(k.storeKey)
+	if !store.Has([]byte(name)) {
 		return NewWhois()
 	}
-	bz := store.get([]byte(name))
+	bz := store.Get([]byte(name))
 	var whois Whois
 	k.cdc.MustUnmarshalBinaryBare(bz, &whois)
 	return whois
@@ -59,7 +59,7 @@ func (k Keeper) ResolveName(ctx sdk.Context, name string) string {
 
 // Sets the value string that a name resolves to
 func (k Keeper) SetName(ctx sdk.Context, name string, value string) {
-	whois := k.getWhois(ctx, name)
+	whois := k.GetWhois(ctx, name)
 	whois.Value = value
 	k.SetWhois(ctx, name, whois)
 }
@@ -67,7 +67,7 @@ func (k Keeper) SetName(ctx sdk.Context, name string, value string) {
 
 // Returns whether or not the name already has an owner
 func (k Keeper) HasOwner(ctx sdk.Context, name string) bool {
-	return !k.getWhois(ctx, name).Owner.Empty()
+	return !k.GetWhois(ctx, name).Owner.Empty()
 }
 
 
@@ -100,7 +100,7 @@ func (k Keeper) SetPrice(ctx sdk.Context, name string, price sdk.Coins) {
 
 
 // Get an iterator over all names in which the keys are the names and the values are the whois
-func (k Keeper) GetNameIterator(ctx sdk.Context) sdk.Iterator {
-	store := ctx.KVStore(k.storekey)
+func (k Keeper) GetNamesIterator(ctx sdk.Context) sdk.Iterator {
+	store := ctx.KVStore(k.storeKey)
 	return sdk.KVStorePrefixIterator(store, []byte{})
 }

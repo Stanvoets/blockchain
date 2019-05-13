@@ -6,10 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-/*
----------------------------------- SET NAME ----------------------------------
-*/
-
 // MsgSetName defines a SetName message
 type MsgSetName struct {
 	Name string
@@ -29,11 +25,15 @@ func NewMsgSetName (name string, value string, owner sdk.AccAddress) MsgSetName 
 
 
 // Route returns name of the module this type belongs to.
-func (msg MsgSetName) Route() string { return "nameservice" }
+func (msg MsgSetName) Route() string {
+	return "nameservice"
+}
 
 
 // Returns the action
-func (msg MsgSetName) Type() string { return "set_name" }
+func (msg MsgSetName) Type() string {
+	return "set_name"
+}
 
 
 // Runs stateless checks on the message
@@ -41,7 +41,7 @@ func (msg MsgSetName) ValidateBasic() sdk.Error {
 	if msg.Owner.Empty() {
 		return sdk.ErrInvalidAddress(msg.Owner.String())
 	}
-	if len(msg.Name) == 0 || len(msg.value) == 0 {
+	if len(msg.Name) == 0 || len(msg.Value) == 0 {
 		return sdk.ErrUnknownRequest("Name and/or Value can't be empty")
 	}
 	return nil
@@ -59,17 +59,10 @@ func (msg MsgSetName) GetSignBytes() []byte {
 
 
 // Defines whose signature is required
-func (msg MsgSetName) GetSingers() []sdk.AccAddress {
+func (msg MsgSetName) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Owner}
 }
-/*
-------------------------------------------------------------------------------
-*/
 
-
-/*
----------------------------------- BUY NAME ----------------------------------
-*/
 
 // Buy name message
 type MsgBuyName struct {
@@ -107,7 +100,7 @@ func (msg MsgBuyName) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress(msg.Buyer.String())
 	}
 	if len(msg.Name) == 0 {
-		return sdk.ErrUnkownRequest("Name can't be empty")
+		return sdk.ErrUnknownRequest("Name can't be empty")
 	}
 	if !msg.Bid.IsAllPositive() {
 		return sdk.ErrInsufficientCoins("Bids must be positive")
@@ -128,7 +121,7 @@ func (msg MsgBuyName) GetSignBytes() []byte {
 
 // Defines whose signature is required
 func (msg MsgBuyName) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress(msg.Buyer)
+	return []sdk.AccAddress{msg.Buyer}
 }
 /*
 ------------------------------------------------------------------------------

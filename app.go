@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"encoding/json"
 
 	"github.com/tendermint/tendermint/libs/log"
@@ -42,7 +41,7 @@ type nameServiceApp struct {
 	bankKeeper          bank.Keeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
 	paramsKeeper        params.Keeper
-	nsKeeper            Keeper
+	nsKeeper            nameservice.Keeper
 }
 
 
@@ -89,7 +88,7 @@ func NewNameServiceApp(logger log.Logger, db dbm.DB) *nameServiceApp {
 
 	// The NameserviceKeeper is the Keeper from the module for this tutorial
 	// It handles interactions with the namestore
-	app.nsKeeper = NewKeeper(
+	app.nsKeeper = nameservice.NewKeeper(
 		app.bankKeeper,
 		app.keyNS,
 		app.cdc,
@@ -102,11 +101,11 @@ func NewNameServiceApp(logger log.Logger, db dbm.DB) *nameServiceApp {
 	// Register the bank and nameservice routes here
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.bankKeeper)).
-		AddRoute("nameservice", NewHandler(app.nsKeeper))
+		AddRoute("nameservice", nameservice.NewHandler(app.nsKeeper))
 
 	// The app.QueryRouter is the main query router where each module registers its routes
 	app.QueryRouter().
-		AddRoute("nameservice", NewQuerier(app.nsKeeper)).
+		AddRoute("nameservice", nameservice.NewQuerier(app.nsKeeper)).
 		AddRoute("acc", auth.NewQuerier(app.accountKeeper))
 
 	// The initChainer handles translating the genesis.json file into initial state for the network
@@ -163,7 +162,7 @@ func (app *nameServiceApp) initChainer(ctx sdk.Context, req abci.RequestInitChai
 // ExportAppStateAndValidators does the things
 func (app *nameServiceApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	ctx := app.NewContext(true, abci.Header{})
-	accounts := []*auth.BaseAccount{}
+	var accounts []*auth.BaseAccount
 
 	appendAccountsFn := func(acc auth.Account) bool {
 		account := &auth.BaseAccount{
