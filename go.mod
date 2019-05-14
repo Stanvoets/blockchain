@@ -1,4 +1,4 @@
-module github.com/stanvoets/nameservice
+module github.com/stanvoets/blockchain
 
 go 1.12
 

@@ -23,7 +23,7 @@ import (
 
 	gaiaInit "github.com/cosmos/cosmos-sdk/cmd/gaia/init"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	app "github.com/stanvoets/nameservice"
+	app "github.com/Stanvoets/blockchain"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cfg "github.com/tendermint/tendermint/config"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -45,7 +45,7 @@ func main(){
 
 	rootCmd := &cobra.Command{
 		Use:               "nsd",
-		Short:             "nameservice App Daemon (server)",
+		Short:             "Blockchain App Daemon (server)",
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
 
@@ -62,13 +62,13 @@ func main(){
 }
 
 func newApp(logger log.Logger, db dbm.DB, _ io.Writer) abci.Application {
-	return app.NewNameServiceApp(logger, db)
+	return app.NewBlockChainApp(logger, db)
 }
 
 func appExporter() server.AppExporter {
 	return func(logger log.Logger, db dbm.DB, _ io.Writer, _ int64, _ bool, _ []string) (
 		json.RawMessage, []tmtypes.GenesisValidator, error) {
-		dapp := app.NewNameServiceApp(logger, db)
+		dapp := app.NewBlockChainApp(logger, db)
 		return dapp.ExportAppStateAndValidators()
 	}
 }
@@ -142,7 +142,7 @@ func AddGenesisAccountCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command 
 		Long: strings.TrimSpace(`
 Adds accounts to the genesis file so that you can start a chain with coins in the CLI:
 
-$ nsd add-genesis-account cosmos1tse7r2fadvlrrgau3pa0ss7cqh55wrv6y9alwh 1000STAKE,1000nametoken
+$ nsd add-genesis-account 1tse7r2fadvlrrgau3pa0ss7cqh55wrv6y9alwh 1000STAKE,1000nametoken
 `),
 		RunE: func(_ *cobra.Command, args []string) error {
 			addr, err := sdk.AccAddressFromBech32(args[0])
@@ -194,7 +194,7 @@ $ nsd add-genesis-account cosmos1tse7r2fadvlrrgau3pa0ss7cqh55wrv6y9alwh 1000STAK
 	return cmd
 }
 
-// SimpleAppGenTx returns a simple GenTx command that makes the node a valdiator from the start
+// SimpleAppGenTx returns a simple GenTx command that makes the node a validator from the start
 func SimpleAppGenTx(cdc *codec.Codec, pk crypto.PubKey) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
 
