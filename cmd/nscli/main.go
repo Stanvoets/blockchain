@@ -19,7 +19,7 @@ import (
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
-	app "github.com/stanvoets/blockhain"
+	app "github.com/stanvoets/blockchain"
 	bclient "github.com/stanvoets/blockchain/x/blockchain/client"
 	brest "github.com/stanvoets/blockchain/x/blockchain/client/rest"
 )

@@ -1,8 +1,61 @@
-module github.com/Stanvoets/blockchain
+module github.com/stanvoets/blockchain
 
 go 1.12
 
 require (
+	cloud.google.com/go v0.39.0
+	github.com/beorn7/perks v1.0.0
+	github.com/btcsuite/btcd v0.0.0-20190427004231-96897255fd17
+	github.com/btcsuite/goleveldb v1.0.0
+	github.com/coreos/etcd v3.3.13+incompatible
+	github.com/coreos/go-semver v0.3.0
 	github.com/cosmos/cosmos-sdk v0.34.4
+	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d
+	github.com/cosmos/ledger-cosmos-go v0.10.2
+	github.com/gogo/protobuf v1.2.1
+	github.com/golang/mock v1.3.1
+	github.com/google/btree v1.0.0
+	github.com/google/go-cmp v0.3.0
+	github.com/google/gofuzz v1.0.0
+	github.com/google/pprof v0.0.0-20190502144155-8358a9778bd1
+	github.com/gorilla/mux v1.7.1
+	github.com/hashicorp/golang-lru v0.5.1
+	github.com/jessevdk/go-flags v1.4.0
+	github.com/kisielk/errcheck v1.2.0
+	github.com/kkdai/bstream v0.0.0-20181106074824-b3251f7901ec
+	github.com/konsorten/go-windows-terminal-sequences v1.0.2
+	github.com/magiconair/properties v1.8.1
+	github.com/mattn/go-isatty v0.0.7
+	github.com/onsi/ginkgo v1.8.0
+	github.com/onsi/gomega v1.5.0
+	github.com/otiai10/copy v1.0.1
+	github.com/otiai10/curr v0.0.0-20190513014714-f5a3d24e5776
+	github.com/pelletier/go-toml v1.4.0
+	github.com/prometheus/common v0.4.0
+	github.com/prometheus/procfs v0.0.0-20190507164030-5867b95ac084
+	github.com/rakyll/statik v0.1.6
+	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a
+	github.com/sirupsen/logrus v1.4.1
+	github.com/spf13/afero v1.2.2
+	github.com/spf13/viper v1.3.2
+	github.com/stretchr/objx v0.2.0
+	github.com/syndtr/goleveldb v1.0.0
+	github.com/tendermint/iavl v0.12.2
 	github.com/tendermint/tendermint v0.31.5
+	golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f
+	golang.org/x/exp v0.0.0-20190510132918-efd6b22b2522
+	golang.org/x/image v0.0.0-20190507092727-e4e5bf290fec
+	golang.org/x/lint v0.0.0-20190409202823-959b441ac422
+	golang.org/x/mobile v0.0.0-20190509164839-32b2708ab171
+	golang.org/x/net v0.0.0-20190509222800-a4d6f7feada5
+	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a
+	golang.org/x/sys v0.0.0-20190509141414-a5b02f93d862
+	golang.org/x/text v0.3.2
+	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
+	golang.org/x/tools v0.0.0-20190513233021-7d589f28aaf4
+	google.golang.org/appengine v1.5.0
+	google.golang.org/genproto v0.0.0-20190513181449-d00d292a067c
+	google.golang.org/grpc v1.20.1
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127
+	honnef.co/go/tools v0.0.0-20190418001031-e561f6794a2a
 )
