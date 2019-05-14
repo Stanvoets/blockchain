@@ -20,8 +20,8 @@ import (
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	app "github.com/stanvoets/blockhain"
-	// nsclient "github.com/stanvoets/nameservice/x/nameservice/client"
-	// nsrest "github.com/stanvoets/nameservice/x/nameservice/client/rest"
+	// nsclient "github.com/stanvoets/blockchain/x/blockchain/client"
+	// nsrest "github.com/stanvoets/blockchain/x/blockchain/client/rest"
 )
 
 const (
@@ -44,7 +44,7 @@ func main() {
 	config.Seal()
 
 	mc := []sdk.ModuleClients{
-		nsclient.NewModuleClient(storeNS, cdc),
+		nsclient.NewModuleClient(storeBC, cdc),
 	}
 
 	rootCmd := &cobra.Command{
@@ -85,7 +85,7 @@ func registerRoutes(rs *lcd.RestServer) {
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeAcc)
 	bank.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	// nsrest.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeNS)
+	// nsrest.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeBC)
 }
 
 func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
