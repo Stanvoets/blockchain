@@ -5,13 +5,12 @@ import (
 	"path"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,9 +18,11 @@ import (
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
+	distClient "github.com/cosmos/cosmos-sdk/x/distribution/client"
+	govClient "github.com/cosmos/cosmos-sdk/x/gov/client"
+	slashingclient "github.com/cosmos/cosmos-sdk/x/slashing/client"
+	stakingclient "github.com/cosmos/cosmos-sdk/x/staking/client"
 	app "github.com/stanvoets/blockchain"
-	bclient "github.com/stanvoets/blockchain/x/blockchain/client"
-	brest "github.com/stanvoets/blockchain/x/blockchain/client/rest"
 )
 
 const (
@@ -44,7 +45,10 @@ func main() {
 	config.Seal()
 
 	mc := []sdk.ModuleClients{
-		bclient.NewModuleClient(storeB, cdc),
+		govClient.NewModuleClient(storeB, cdc),
+		distClient.NewModuleClient(storeB, cdc),
+		stakingclient.NewModuleClient(storeB, cdc),
+		slashingclient.NewModuleClient(storeB, cdc),
 	}
 
 	rootCmd := &cobra.Command{
@@ -65,11 +69,7 @@ func main() {
 		queryCmd(cdc, mc),
 		txCmd(cdc, mc),
 		client.LineBreak,
-		lcd.ServeCommand(cdc, registerRoutes),
 		client.LineBreak,
-		keys.Commands(),
-		client.LineBreak,
-
 	)
 
 	executor := cli.PrepareMainCmd(rootCmd, "NS", defaultCLIHome)
@@ -85,7 +85,7 @@ func registerRoutes(rs *lcd.RestServer) {
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeAcc)
 	bank.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	// nsrest.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeB)
+	// brest.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeB)
 }
 
 func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
