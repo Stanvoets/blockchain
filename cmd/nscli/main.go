@@ -5,12 +5,13 @@ import (
 	"path"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tendermint/go-amino"
+	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,16 +19,13 @@ import (
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
-	distClient "github.com/cosmos/cosmos-sdk/x/distribution/client"
-	govClient "github.com/cosmos/cosmos-sdk/x/gov/client"
-	slashingclient "github.com/cosmos/cosmos-sdk/x/slashing/client"
-	stakingclient "github.com/cosmos/cosmos-sdk/x/staking/client"
 	app "github.com/stanvoets/blockchain"
+	stakingclient "github.com/cosmos/cosmos-sdk/x/staking/client"
 )
 
 const (
 	storeAcc = "acc"
-	storeB  = "blockchain"
+	storeNS  = "nameservice"
 )
 
 var defaultCLIHome = os.ExpandEnv("$HOME/.nscli")
@@ -39,21 +37,18 @@ func main() {
 
 	// Read in the configuration file for the sdk
 	config := sdk.GetConfig()
-	// config.SetBech32PrefixForAccount(sdk.Bech32PrefixAccAddr, sdk.Bech32PrefixAccPub)
+	config.SetBech32PrefixForAccount(sdk.Bech32PrefixAccAddr, sdk.Bech32PrefixAccPub)
 	config.SetBech32PrefixForValidator(sdk.Bech32PrefixValAddr, sdk.Bech32PrefixValPub)
 	config.SetBech32PrefixForConsensusNode(sdk.Bech32PrefixConsAddr, sdk.Bech32PrefixConsPub)
 	config.Seal()
 
 	mc := []sdk.ModuleClients{
-		govClient.NewModuleClient(storeB, cdc),
-		distClient.NewModuleClient(storeB, cdc),
-		stakingclient.NewModuleClient(storeB, cdc),
-		slashingclient.NewModuleClient(storeB, cdc),
+		stakingclient.NewModuleClient(storeNS, cdc),
 	}
 
 	rootCmd := &cobra.Command{
 		Use:   "nscli",
-		Short: "Blockchain Client",
+		Short: "nameservice Client",
 	}
 
 	// Add --chain-id to persistent flags and mark it required
@@ -69,6 +64,9 @@ func main() {
 		queryCmd(cdc, mc),
 		txCmd(cdc, mc),
 		client.LineBreak,
+		lcd.ServeCommand(cdc, registerRoutes),
+		client.LineBreak,
+		keys.Commands(),
 		client.LineBreak,
 	)
 
@@ -85,7 +83,7 @@ func registerRoutes(rs *lcd.RestServer) {
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeAcc)
 	bank.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	// brest.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeB)
+	//nsrest.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeNS)
 }
 
 func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
