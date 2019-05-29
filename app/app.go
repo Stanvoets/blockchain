@@ -47,8 +47,8 @@ const (
 )
 
 var (
-	DefaultCLIHome  = os.ExpandEnv("$HOME/.gaiacli")
-	DefaultNodeHome = os.ExpandEnv("$HOME/.gaiad")
+	DefaultCLIHome  = os.ExpandEnv("$HOME/.bcnacli")
+	DefaultNodeHome = os.ExpandEnv("$HOME/.bcnad")
 )
 
 type BcnaApp struct {
