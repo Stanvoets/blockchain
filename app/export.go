@@ -11,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/mint"
@@ -30,7 +31,7 @@ func (app *BcnaApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLis
 	}
 
 	// iterate to get the accounts
-	var accounts []GenesisAccount
+	accounts := []GenesisAccount{}
 	appendAccount := func(acc auth.Account) (stop bool) {
 		account := NewGenesisAccountI(acc)
 		accounts = append(accounts, account)
@@ -46,6 +47,7 @@ func (app *BcnaApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLis
 		mint.ExportGenesis(ctx, app.mintKeeper),
 		distr.ExportGenesis(ctx, app.distrKeeper),
 		gov.ExportGenesis(ctx, app.govKeeper),
+		crisis.ExportGenesis(ctx, app.crisisKeeper),
 		slashing.ExportGenesis(ctx, app.slashingKeeper),
 	)
 	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
@@ -60,7 +62,7 @@ func (app *BcnaApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLis
 func (app *BcnaApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []string) {
 	applyWhiteList := false
 
-	// Check for whitelist
+	//Check if there is a whitelist
 	if len(jailWhiteList) > 0 {
 		applyWhiteList = true
 	}
@@ -82,14 +84,14 @@ func (app *BcnaApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []st
 
 	// withdraw all validator commission
 	app.stakingKeeper.IterateValidators(ctx, func(_ int64, val sdk.Validator) (stop bool) {
-		_ = app.distrKeeper.WithdrawValidatorCommission(ctx, val.GetOperator())
+		_, _ = app.distrKeeper.WithdrawValidatorCommission(ctx, val.GetOperator())
 		return false
 	})
 
 	// withdraw all delegator rewards
 	dels := app.stakingKeeper.GetAllDelegations(ctx)
 	for _, delegation := range dels {
-		_ = app.distrKeeper.WithdrawDelegationRewards(ctx, delegation.DelegatorAddress, delegation.ValidatorAddress)
+		_, _ = app.distrKeeper.WithdrawDelegationRewards(ctx, delegation.DelegatorAddress, delegation.ValidatorAddress)
 	}
 
 	// clear validator slash events
@@ -118,6 +120,7 @@ func (app *BcnaApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []st
 	// reinitialize all delegations
 	for _, del := range dels {
 		app.distrKeeper.Hooks().BeforeDelegationCreated(ctx, del.DelegatorAddress, del.ValidatorAddress)
+		app.distrKeeper.Hooks().AfterDelegationModified(ctx, del.DelegatorAddress, del.ValidatorAddress)
 	}
 
 	// reset context height

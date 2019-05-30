@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/cosmos/cosmos-sdk/x/crisis"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
@@ -49,6 +50,7 @@ const (
 var (
 	DefaultCLIHome  = os.ExpandEnv("$HOME/.bcnacli")
 	DefaultNodeHome = os.ExpandEnv("$HOME/.bcnad")
+	//DefaultDenom = "stake"
 )
 
 type BcnaApp struct {
@@ -77,6 +79,7 @@ type BcnaApp struct {
 	mintKeeper			mint.Keeper
 	distrKeeper 		distr.Keeper
 	govKeeper           gov.Keeper
+	crisisKeeper        crisis.Keeper
 	paramsKeeper        params.Keeper
 }
 
@@ -130,6 +133,11 @@ func NewBcnaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 		app.keyFeeCollection,
 	)
 
+	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(
+		app.cdc,
+		app.keyFeeCollection,
+	)
+
 	stakingKeeper := staking.NewKeeper (
 		app.cdc,
 		app.keyMain,
@@ -167,6 +175,13 @@ func NewBcnaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 		gov.DefaultCodespace,
 	)
 
+	app.crisisKeeper = crisis.NewKeeper(
+		app.paramsKeeper.Subspace(crisis.DefaultParamspace),
+		app.distrKeeper,
+		app.bankKeeper,
+		app.feeCollectionKeeper,
+	)
+
 	// register the staking hooks
 	// NOTE: The stakingKeeper above is passed by reference, so that it can be
 	// modified like below:
@@ -174,11 +189,10 @@ func NewBcnaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 		NewStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()),
 	)
 
-	// The FeeCollectionKeeper collects transaction fees and renders them to the fee distribution module
-	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(cdc, app.keyFeeCollection)
-
-	// The AnteHandler handles signature verification and transaction pre-processing
-	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
+	// register the crisis routes
+	bank.RegisterInvariants(&app.crisisKeeper, app.accountKeeper)
+	distr.RegisterInvariants(&app.crisisKeeper, app.distrKeeper, app.stakingKeeper)
+	staking.RegisterInvariants(&app.crisisKeeper, app.stakingKeeper, app.feeCollectionKeeper, app.distrKeeper, app.accountKeeper)
 
 	// The app.Router is the main transaction router where each module registers its routes
 	// Register routes
@@ -187,7 +201,8 @@ func NewBcnaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 		AddRoute(staking.RouterKey, staking.NewHandler(app.stakingKeeper)).
 		AddRoute(distr.RouterKey, distr.NewHandler(app.distrKeeper)).
 		AddRoute(slashing.RouterKey, slashing.NewHandler(app.slashingKeeper)).
-		AddRoute(gov.RouterKey, gov.NewHandler(app.govKeeper))
+		AddRoute(gov.RouterKey, gov.NewHandler(app.govKeeper)).
+		AddRoute(crisis.RouterKey, crisis.NewHandler(app.crisisKeeper))
 
 	// The app.QueryRouter is the main query router where each module registers its routes
 	// Register account routes
@@ -228,6 +243,7 @@ func MakeCodec() *codec.Codec {
 	slashing.RegisterCodec(cdc)
 	gov.RegisterCodec(cdc)
 	auth.RegisterCodec(cdc)
+	crisis.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 	return cdc
@@ -242,10 +258,6 @@ func (app *BcnaApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) ab
 	distr.BeginBlocker(ctx, req, app.distrKeeper)
 
 	// slash anyone who double signed.
-	// NOTE: This should happen after distr.BeginBlocker so that
-	// there is nothing left over in the validator fee pool,
-	// so as to keep the CanWithdrawInvariant invariant.
-	// TODO: This should really happen at EndBlocker.
 	tags := slashing.BeginBlocker(ctx, req, app.slashingKeeper)
 
 	return abci.ResponseBeginBlock{
@@ -284,7 +296,7 @@ func (app *BcnaApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisSt
 	// load the initial staking information
 	validators, err := staking.InitGenesis(ctx, app.stakingKeeper, genesisState.StakingData)
 	if err != nil {
-		panic(err) // TODO find a way to do this w/o panics
+		panic(err) // @TODO exit gracefully
 	}
 
 	// initialize module-specific stores
@@ -292,11 +304,12 @@ func (app *BcnaApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisSt
 	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
 	slashing.InitGenesis(ctx, app.slashingKeeper, genesisState.SlashingData, genesisState.StakingData.Validators.ToSDKValidators())
 	gov.InitGenesis(ctx, app.govKeeper, genesisState.GovData)
+	crisis.InitGenesis(ctx, app.crisisKeeper, genesisState.CrisisData)
 	mint.InitGenesis(ctx, app.mintKeeper, genesisState.MintData)
 
 	// validate genesis state
 	if err := GaiaValidateGenesisState(genesisState); err != nil {
-		panic(err) // TODO find a way to do this w/o panics
+		panic(err) // @TODO exit gracefully
 	}
 
 	if len(genesisState.GenTxs) > 0 {
@@ -323,7 +336,7 @@ func (app *BcnaApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci
 	stateJSON := req.AppStateBytes
 
 	var genesisState GenesisState
-	err := app.cdc.UnmarshalJSON(stateJSON, genesisState)
+	err := app.cdc.UnmarshalJSON(stateJSON, &genesisState)
 	if err != nil {
 		panic(err)
 	}

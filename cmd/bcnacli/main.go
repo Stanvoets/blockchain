@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/mint"
 	"net/http"
 	"os"
 	"path"
@@ -23,6 +24,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 
 	at "github.com/cosmos/cosmos-sdk/x/auth"
+	mintrest "github.com/cosmos/cosmos-sdk/x/mint/client/rest"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	dist "github.com/cosmos/cosmos-sdk/x/distribution/client/rest"
@@ -35,14 +37,20 @@ import (
 
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
+	crisisclient "github.com/cosmos/cosmos-sdk/x/crisis/client"
 	distcmd "github.com/cosmos/cosmos-sdk/x/distribution"
 	distClient "github.com/cosmos/cosmos-sdk/x/distribution/client"
 	govClient "github.com/cosmos/cosmos-sdk/x/gov/client"
+	mintclient "github.com/cosmos/cosmos-sdk/x/mint/client"
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 	stakingClient "github.com/cosmos/cosmos-sdk/x/staking/client"
 
 	_ "github.com/cosmos/cosmos-sdk/client/lcd/statik"
 )
+
+//const (
+//	flagClientHome   = "home-client"
+//)
 
 func main() {
 	// Let Cobra sort commands
@@ -63,7 +71,9 @@ func main() {
 		govClient.NewModuleClient(gv.StoreKey, cdc),
 		distClient.NewModuleClient(distcmd.StoreKey, cdc),
 		stakingClient.NewModuleClient(st.StoreKey, cdc),
+		mintclient.NewModuleClient(mint.StoreKey, cdc),
 		slashingClient.NewModuleClient(sl.StoreKey, cdc),
+		crisisclient.NewModuleClient(sl.StoreKey, cdc),
 	}
 
 	rootCmd := &cobra.Command{
@@ -72,7 +82,7 @@ func main() {
 	}
 
 	// Add --chain-id to persistent flags and mark it required
-	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
+	rootCmd.PersistentFlags().String(client.FlagChainID, "BcnaChain", "Chain ID of tendermint node")
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
 		return initConfig(rootCmd)
 	}
@@ -120,7 +130,10 @@ func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	)
 
 	for _, m := range mc {
-		queryCmd.AddCommand(m.GetQueryCmd())
+		mQueryCmd := m.GetQueryCmd()
+		if mQueryCmd != nil {
+			queryCmd.AddCommand(mQueryCmd)
+		}
 	}
 
 	return queryCmd
@@ -170,6 +183,7 @@ func registerRoutes(rs *lcd.RestServer) {
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	gov.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	mintrest.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 }
 
 func initConfig(cmd *cobra.Command) error {
