@@ -2,19 +2,19 @@ package main
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/x/mint"
 	"net/http"
 	"os"
 	"path"
+
+	"github.com/cosmos/cosmos-sdk/x/mint"
 
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/stanvoets/blockchain/app"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
@@ -22,18 +22,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
-
 	at "github.com/cosmos/cosmos-sdk/x/auth"
-	mintrest "github.com/cosmos/cosmos-sdk/x/mint/client/rest"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	dist "github.com/cosmos/cosmos-sdk/x/distribution/client/rest"
 	gv "github.com/cosmos/cosmos-sdk/x/gov"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
+	mintrest "github.com/cosmos/cosmos-sdk/x/mint/client/rest"
 	sl "github.com/cosmos/cosmos-sdk/x/slashing"
 	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
 	st "github.com/cosmos/cosmos-sdk/x/staking"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/client/rest"
+	"github.com/stanvoets/blockchain/app"
 
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
@@ -47,10 +47,6 @@ import (
 
 	_ "github.com/cosmos/cosmos-sdk/client/lcd/statik"
 )
-
-//const (
-//	flagClientHome   = "home-client"
-//)
 
 func main() {
 	// Let Cobra sort commands

@@ -31,7 +31,7 @@ func (app *BcnaApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLis
 	}
 
 	// iterate to get the accounts
-	accounts := []GenesisAccount{}
+	var accounts []GenesisAccount
 	appendAccount := func(acc auth.Account) (stop bool) {
 		account := NewGenesisAccountI(acc)
 		accounts = append(accounts, account)
@@ -62,7 +62,7 @@ func (app *BcnaApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLis
 func (app *BcnaApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []string) {
 	applyWhiteList := false
 
-	//Check if there is a whitelist
+	// Check if there is a whitelist
 	if len(jailWhiteList) > 0 {
 		applyWhiteList = true
 	}

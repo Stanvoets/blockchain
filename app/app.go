@@ -50,21 +50,24 @@ const (
 var (
 	DefaultCLIHome  = os.ExpandEnv("$HOME/.bcnacli")
 	DefaultNodeHome = os.ExpandEnv("$HOME/.bcnad")
-	//DefaultDenom = "stake"
+	DefaultDenom = "bitcanna"
 )
 
 type BcnaApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
+	invCheckPeriod uint
+
+	// Substore keys
 	keyMain          *sdk.KVStoreKey
 	keyAccount       *sdk.KVStoreKey
 	keyStaking       *sdk.KVStoreKey
 	tkeyStaking      *sdk.TransientStoreKey
 	keySlashing      *sdk.KVStoreKey
-	keyMint      	 *sdk.KVStoreKey
-	keyDistr      	 *sdk.KVStoreKey
-	tkeyDistr      	 *sdk.TransientStoreKey
+	keyMint          *sdk.KVStoreKey
+	keyDistr         *sdk.KVStoreKey
+	tkeyDistr        *sdk.TransientStoreKey
 	keyGov           *sdk.KVStoreKey
 	keyFeeCollection *sdk.KVStoreKey
 	keyParams        *sdk.KVStoreKey
@@ -72,19 +75,19 @@ type BcnaApp struct {
 
 	// Keepers
 	accountKeeper       auth.AccountKeeper
+	feeCollectionKeeper auth.FeeCollectionKeeper
 	bankKeeper          bank.Keeper
 	stakingKeeper       staking.Keeper
-	slashingKeeper		slashing.Keeper
-	feeCollectionKeeper auth.FeeCollectionKeeper
-	mintKeeper			mint.Keeper
-	distrKeeper 		distr.Keeper
+	slashingKeeper      slashing.Keeper
+	mintKeeper          mint.Keeper
+	distrKeeper         distr.Keeper
 	govKeeper           gov.Keeper
 	crisisKeeper        crisis.Keeper
 	paramsKeeper        params.Keeper
 }
 
 
-func NewBcnaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, baseAppOptions ...func(*bam.BaseApp)) *BcnaApp {
+func NewBcnaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, invCheckPeriod uint, baseAppOptions ...func(*bam.BaseApp)) *BcnaApp {
 
 	// Top level codec
 	cdc := MakeCodec()
@@ -94,8 +97,9 @@ func NewBcnaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 	bApp.SetCommitMultiStoreTracer(traceStore)
 
 	var app = &BcnaApp{
-		BaseApp: 		  bApp,
-		cdc:     		  cdc,
+		BaseApp:          bApp,
+		cdc:              cdc,
+		invCheckPeriod:   invCheckPeriod,
 		keyMain:          sdk.NewKVStoreKey(bam.MainStoreKey),
 		keyAccount:       sdk.NewKVStoreKey(auth.StoreKey),
 		keyStaking:       sdk.NewKVStoreKey(staking.StoreKey),
@@ -133,15 +137,10 @@ func NewBcnaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 		app.keyFeeCollection,
 	)
 
-	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(
-		app.cdc,
-		app.keyFeeCollection,
-	)
-
 	stakingKeeper := staking.NewKeeper (
 		app.cdc,
-		app.keyMain,
-		app.tkeyParams,
+		app.keyStaking,
+		app.tkeyStaking,
 		app.bankKeeper,
 		app.paramsKeeper.Subspace(staking.DefaultParamspace),
 		staking.DefaultCodespace,
@@ -149,21 +148,24 @@ func NewBcnaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 
 	app.mintKeeper = mint.NewKeeper(app.cdc, app.keyMint,
 		app.paramsKeeper.Subspace(mint.DefaultParamspace),
-		&stakingKeeper, app.feeCollectionKeeper,
+		&stakingKeeper,
+		app.feeCollectionKeeper,
 	)
 
 	app.distrKeeper = distr.NewKeeper(
 		app.cdc,
 		app.keyDistr,
 		app.paramsKeeper.Subspace(distr.DefaultParamspace),
-		app.bankKeeper, &stakingKeeper, app.feeCollectionKeeper,
+		app.bankKeeper,
+		&stakingKeeper,
+		app.feeCollectionKeeper,
 		distr.DefaultCodespace,
 	)
 
 	app.slashingKeeper = slashing.NewKeeper (
 		app.cdc,
-		app.keyMain,
-		app.stakingKeeper,
+		app.keySlashing,
+		&stakingKeeper,
 		app.paramsKeeper.Subspace(slashing.DefaultParamspace),
 		slashing.DefaultCodespace,
 	)
@@ -211,8 +213,8 @@ func NewBcnaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 		AddRoute(distr.QuerierRoute, distr.NewQuerier(app.distrKeeper)).
 		AddRoute(gov.QuerierRoute, gov.NewQuerier(app.govKeeper)).
 		AddRoute(slashing.QuerierRoute, slashing.NewQuerier(app.slashingKeeper, app.cdc)).
-		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc))
-
+		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
+		AddRoute(mint.QuerierRoute, mint.NewQuerier(app.mintKeeper))
 
 	app.MountStores(app.keyMain, app.keyAccount, app.keyStaking, app.keyMint, app.keyDistr,
 		app.keySlashing, app.keyGov, app.keyFeeCollection, app.keyParams,
@@ -271,7 +273,9 @@ func (app *BcnaApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.R
 	validatorUpdates, endBlockerTags := staking.EndBlocker(ctx, app.stakingKeeper)
 	tags = append(tags, endBlockerTags...)
 
-	app.assertRuntimeInvariants()
+	if app.invCheckPeriod != 0 && ctx.BlockHeight()%int64(app.invCheckPeriod) == 0 {
+		app.assertRuntimeInvariants()
+	}
 
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
@@ -298,6 +302,7 @@ func (app *BcnaApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisSt
 	if err != nil {
 		panic(err) // @TODO exit gracefully
 	}
+
 
 	// initialize module-specific stores
 	auth.InitGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper, genesisState.AuthData)
@@ -334,16 +339,13 @@ func (app *BcnaApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisSt
 // Init chain.
 func (app *BcnaApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	stateJSON := req.AppStateBytes
+	// TODO is this now the whole genesis file?
 
 	var genesisState GenesisState
 	err := app.cdc.UnmarshalJSON(stateJSON, &genesisState)
 	if err != nil {
-		panic(err)
-	}
-
-	for _, acc := range genesisState.Accounts {
-		acc.AccountNumber = app.accountKeeper.GetNextAccountNumber(ctx)
-		app.accountKeeper.SetAccount(ctx, acc.ToAccount())
+		panic(err) // TODO https://github.com/cosmos/cosmos-sdk/issues/468
+		// return sdk.ErrGenesisParse("").TraceCause(err, "")
 	}
 
 	validators := app.initFromGenesisState(ctx, genesisState)
@@ -363,6 +365,7 @@ func (app *BcnaApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci
 		}
 	}
 
+	// assert runtime invariants
 	app.assertRuntimeInvariants()
 
 	return abci.ResponseInitChain{

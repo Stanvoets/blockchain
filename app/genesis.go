@@ -196,6 +196,8 @@ func GaiaAppGenState(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []js
 		}
 	}
 
+	stakingData.Params.BondDenom = "bitcanna"
+
 	genesisState.StakingData = stakingData
 	genesisState.GenTxs = appGenTxs
 
@@ -204,15 +206,30 @@ func GaiaAppGenState(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []js
 
 // NewDefaultGenesisState generates the default state for gaia.
 func NewDefaultGenesisState() GenesisState {
+
+	// Change denoms for all keepers that are needed
+	stakingState := staking.DefaultGenesisState()
+	stakingState.Params.BondDenom = DefaultDenom
+
+	mintState := mint.DefaultGenesisState()
+	mintState.Params.MintDenom = DefaultDenom
+
+	govState := gov.DefaultGenesisState()
+	minDepositTokens := sdk.TokensFromTendermintPower(10)
+	govState.DepositParams.MinDeposit = sdk.Coins{sdk.NewCoin(DefaultDenom, minDepositTokens)}
+
+	crisisState := crisis.DefaultGenesisState()
+	crisisState.ConstantFee.Denom = DefaultDenom
+
 	return GenesisState{
 		Accounts:     nil,
 		AuthData:     auth.DefaultGenesisState(),
 		BankData:     bank.DefaultGenesisState(),
-		StakingData:  staking.DefaultGenesisState(),
-		MintData:     mint.DefaultGenesisState(),
+		StakingData:  stakingState,
+		MintData:     mintState,
 		DistrData:    distr.DefaultGenesisState(),
-		GovData:      gov.DefaultGenesisState(),
-		CrisisData:   crisis.DefaultGenesisState(),
+		GovData:      govState,
+		CrisisData:   crisisState,
 		SlashingData: slashing.DefaultGenesisState(),
 		GenTxs:       nil,
 	}

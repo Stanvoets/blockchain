@@ -28,12 +28,15 @@ import (
 )
 
 const (
-	flagOverwrite    = "overwrite"
-	flagClientHome   = "home-client"
-	flagVestingStart = "vesting-start-time"
-	flagVestingEnd   = "vesting-end-time"
-	flagVestingAmt   = "vesting-amount"
+	flagInvCheckPeriod 	= "inv-check-period"
+	flagOverwrite      	= "overwrite"
+	flagClientHome   	= "home-client"
+	flagVestingStart 	= "vesting-start-time"
+	flagVestingEnd   	= "vesting-end-time"
+	flagVestingAmt   	= "vesting-amount"
 )
+
+var invCheckPeriod uint
 
 type printInfo struct {
 	Moniker    string          `json:"moniker"`
@@ -80,6 +83,8 @@ func main(){
 
 	// Prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "BC", app.DefaultNodeHome)
+	rootCmd.PersistentFlags().UintVar(&invCheckPeriod, flagInvCheckPeriod,
+		0, "Assert registered invariants every N blocks")
 	err := executor.Execute()
 	if err != nil {
 		fmt.Printf("Failed executing CLI command: %s, exiting...\n", err)
@@ -161,23 +166,23 @@ func initializeEmptyGenesis(cdc *codec.Codec, genFile string, chainID string, ov
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
 	return app.NewBcnaApp(
-		logger, db, traceStore, true,
+		logger, db, traceStore, true, invCheckPeriod,
 		baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))),
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
 	)
 }
-
 func exportAppStateAndTMValidators(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailWhiteList []string,
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
+
 	if height != -1 {
-		bApp := app.NewBcnaApp(logger, db, traceStore, false)
+		bApp := app.NewBcnaApp(logger, db, traceStore, false, uint(1))
 		err := bApp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
 		}
 		return bApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
-	bApp := app.NewBcnaApp(logger, db, traceStore, true)
+	bApp := app.NewBcnaApp(logger, db, traceStore, true, uint(1))
 	return bApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }
