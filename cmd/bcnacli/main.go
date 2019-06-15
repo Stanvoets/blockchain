@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/client/context"
 	"net/http"
 	"os"
 	"path"
@@ -96,6 +97,7 @@ func main() {
 		client.LineBreak,
 		version.VersionCmd,
 		client.NewCompletionCmd(rootCmd, true),
+		unlockKeyCmd(cdc),
 	)
 
 	// Add flags and prefix all env exposed with BC
@@ -135,8 +137,46 @@ func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	return queryCmd
 }
 
+// Check if passphrase for given key is correct (used for e.g. wallet login)
+func unlockKeyCmd(cdc *amino.Codec) *cobra.Command {
+	unlockKeyCmd := &cobra.Command{
+		Use:   "unlock_key [key_label]",
+		Short: "Verify passphrase for a given key (e.g. wallet login)",
+		Args:  cobra.ExactArgs(1),
+		Run: func(unlockKeyCmd *cobra.Command, args []string) {
+			cliCtx := context.NewCLIContext().
+				WithCodec(cdc).
+				WithAccountDecoder(cdc)
+
+			// First arg is the key label
+			keyLabel := args[0]
+			keyBase, err := keys.NewKeyBaseFromHomeFlag()
+			if err != nil {
+				return
+			}
+
+			// First arg is the key label
+			passphrase, err := keys.GetPassphrase(keyLabel)
+			if err != nil {
+				return
+			}
+
+			_, err = keyBase.ExportPrivateKeyObject(keyLabel, passphrase)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%s\n", "Passphrase is incorrect")
+				return
+			}
+
+			// Write succcess to stdout
+			fmt.Fprintf(cliCtx.Output, "%s\n", "Passphrase is correct")
+		},
+	}
+
+	return unlockKeyCmd
+}
+
 func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
-	txCmd := &cobra.Command{
+	txCmd := &cobra.Command {
 		Use:   "tx",
 		Short: "Transactions sub commands",
 	}
