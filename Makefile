@@ -3,7 +3,7 @@ PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
 VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
 CAT := $(if $(filter $(OS),Windows_NT),type,cat)
-LEDGER_ENABLED ?= true
+LEDGER_ENABLED ?= false
 GOTOOLS = \
 	github.com/golang/dep/cmd/dep \
 	github.com/alecthomas/gometalinter \
@@ -40,21 +40,9 @@ ifeq ($(WITH_CLEVELDB),yes)
   build_tags += gcc
 endif
 build_tags += $(BUILD_TAGS)
-build_tags := $(strip $(build_tags))
+build_tags := $(strip $(build_tags))s
 
-# process linker flags
-
-ldflags = -X github.com/stanvoets/blockchain/version.Version=$(VERSION) \
-	-X github.com/stanvoets/blockchain/version.Commit=$(COMMIT) \
-  -X "github.com/stanvoets/blockchain/version.BuildTags=$(build_tags)"
-
-ifeq ($(WITH_CLEVELDB),yes)
-  ldflags += -X github.com/stanvoets/blockchain/types.DBBackend=cleveldb
-endif
-ldflags += $(LDFLAGS)
-ldflags := $(strip $(ldflags))
-
-BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
+BUILD_FLAGS := -tags "$(build_tags)"
 
 all: install
 
