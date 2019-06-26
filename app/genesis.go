@@ -196,8 +196,6 @@ func GaiaAppGenState(cdc *codec.Codec, genDoc tmtypes.GenesisDoc, appGenTxs []js
 		}
 	}
 
-	stakingData.Params.BondDenom = "bitcanna"
-
 	genesisState.StakingData = stakingData
 	genesisState.GenTxs = appGenTxs
 
