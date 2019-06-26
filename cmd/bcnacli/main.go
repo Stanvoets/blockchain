@@ -46,7 +46,7 @@ import (
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 	stakingClient "github.com/cosmos/cosmos-sdk/x/staking/client"
 
-	_ "github.com/cosmos/cosmos-sdk/client/lcd/statik"
+	_ "github.com/stanvoets/blockchain/cmd/bcnacli/lcd/statik"
 )
 
 func main() {

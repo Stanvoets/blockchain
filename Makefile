@@ -76,5 +76,5 @@ build-linux:
 install:
 	go install $(BUILD_FLAGS) ./cmd/bcnad
 	go install $(BUILD_FLAGS) ./cmd/bcnacli
-	@statik -src=client/lcd/swagger-ui -dest=client/lcd -f
+	@statik -src=cmd/bcnacli/lcd/swagger-ui -dest=cmd/bcnacli/lcd -f
 	$(call go_install,rakyll,statik,v0.1.5)

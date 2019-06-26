@@ -50,7 +50,7 @@ const (
 var (
 	DefaultCLIHome  = os.ExpandEnv("$HOME/.bcnacli")
 	DefaultNodeHome = os.ExpandEnv("$HOME/.bcnad")
-	DefaultDenom = "bitcanna"
+	DefaultDenom = "ubcna"
 )
 
 type BcnaApp struct {
