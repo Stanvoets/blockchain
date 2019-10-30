@@ -20,7 +20,7 @@ import (
 )
 
 // export the state of gaia for a genesis file
-func (app *BcnaApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList []string) (
+func (app *StanApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList []string) (
 	appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 
 	// as if they could withdraw from the start of the next block
@@ -59,7 +59,7 @@ func (app *BcnaApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLis
 }
 
 // prepare for fresh start at zero height
-func (app *BcnaApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []string) {
+func (app *StanApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []string) {
 	applyWhiteList := false
 
 	// Check if there is a whitelist

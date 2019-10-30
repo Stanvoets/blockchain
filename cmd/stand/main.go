@@ -63,7 +63,7 @@ func main(){
 
 	// Construct root command
 	rootCmd := &cobra.Command{
-		Use:               "bcnad",
+		Use:               "stand",
 		Short:             "Bitcanna Daemon (server)",
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
@@ -136,7 +136,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().String(cli.HomeFlag, app.DefaultNodeHome, "node's home directory")
 	cmd.Flags().BoolP(flagOverwrite, "o", false, "overwrite the genesis.json file")
-	cmd.Flags().String(client.FlagChainID, "BcnaChain", "genesis file chain-id, if left blank will be randomly created")
+	cmd.Flags().String(client.FlagChainID, "StanChain", "genesis file chain-id, if left blank will be randomly created")
 
 	return cmd
 }
@@ -165,7 +165,7 @@ func initializeEmptyGenesis(cdc *codec.Codec, genFile string, chainID string, ov
 }
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
-	return app.NewBcnaApp(
+	return app.NewStanApp(
 		logger, db, traceStore, true, invCheckPeriod,
 		baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))),
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
@@ -176,13 +176,13 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		bApp := app.NewBcnaApp(logger, db, traceStore, false, uint(1))
+		bApp := app.NewStanApp(logger, db, traceStore, false, uint(1))
 		err := bApp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
 		}
 		return bApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
-	bApp := app.NewBcnaApp(logger, db, traceStore, true, uint(1))
+	bApp := app.NewStanApp(logger, db, traceStore, true, uint(1))
 	return bApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }

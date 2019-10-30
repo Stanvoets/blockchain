@@ -48,12 +48,12 @@ const (
 )
 
 var (
-	DefaultCLIHome  = os.ExpandEnv("$HOME/.bcnacli")
-	DefaultNodeHome = os.ExpandEnv("$HOME/.bcnad")
-	DefaultDenom = "ubcna"
+	DefaultCLIHome  = os.ExpandEnv("$HOME/.stancli")
+	DefaultNodeHome = os.ExpandEnv("$HOME/.stand")
+	DefaultDenom = "ustan"
 )
 
-type BcnaApp struct {
+type StanApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
@@ -87,7 +87,7 @@ type BcnaApp struct {
 }
 
 
-func NewBcnaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, invCheckPeriod uint, baseAppOptions ...func(*bam.BaseApp)) *BcnaApp {
+func NewStanApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, invCheckPeriod uint, baseAppOptions ...func(*bam.BaseApp)) *StanApp {
 
 	// Top level codec
 	cdc := MakeCodec()
@@ -96,7 +96,7 @@ func NewBcnaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 	bApp := bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 
-	var app = &BcnaApp{
+	var app = &StanApp{
 		BaseApp:          bApp,
 		cdc:              cdc,
 		invCheckPeriod:   invCheckPeriod,
@@ -252,7 +252,7 @@ func MakeCodec() *codec.Codec {
 }
 
 // application updates every end block
-func (app *BcnaApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *StanApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	// mint new tokens for the previous block
 	mint.BeginBlocker(ctx, app.mintKeeper)
 
@@ -268,7 +268,7 @@ func (app *BcnaApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) ab
 }
 
 // application updates every end block
-func (app *BcnaApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *StanApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	tags := gov.EndBlocker(ctx, app.govKeeper)
 	validatorUpdates, endBlockerTags := staking.EndBlocker(ctx, app.stakingKeeper)
 	tags = append(tags, endBlockerTags...)
@@ -284,7 +284,7 @@ func (app *BcnaApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.R
 }
 
 // initialize store from a genesis state
-func (app *BcnaApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
+func (app *StanApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
 	genesisState.Sanitize()
 
 	// load the accounts
@@ -337,7 +337,7 @@ func (app *BcnaApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisSt
 }
 
 // Init chain.
-func (app *BcnaApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+func (app *StanApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	stateJSON := req.AppStateBytes
 	// TODO is this now the whole genesis file?
 
@@ -374,7 +374,7 @@ func (app *BcnaApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci
 }
 
 // load a particular height
-func (app *BcnaApp) LoadHeight(height int64) error {
+func (app *StanApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height, app.keyMain)
 }
 

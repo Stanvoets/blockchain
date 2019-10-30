@@ -46,7 +46,7 @@ import (
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 	stakingClient "github.com/cosmos/cosmos-sdk/x/staking/client"
 
-	_ "github.com/stanvoets/blockchain/cmd/bcnacli/lcd/statik"
+	_ "github.com/stanvoets/blockchain/cmd/stancli/lcd/statik"
 )
 
 func main() {
@@ -74,12 +74,12 @@ func main() {
 	}
 
 	rootCmd := &cobra.Command{
-		Use:   "bcnacli",
-		Short: "CLI for interaction with bcnad",
+		Use:   "stancli",
+		Short: "CLI for interaction with stand",
 	}
 
 	// Add --chain-id to persistent flags and mark it required
-	rootCmd.PersistentFlags().String(client.FlagChainID, "BcnaChain", "Chain ID of tendermint node")
+	rootCmd.PersistentFlags().String(client.FlagChainID, "StanChain", "Chain ID of tendermint node")
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
 		return initConfig(rootCmd)
 	}

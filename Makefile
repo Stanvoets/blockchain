@@ -51,18 +51,18 @@ all: install
 
 build:
 ifeq ($(OS),Windows_NT)
-	go build $(BUILD_FLAGS) -o build/bcnad.exe ./cmd/bcnad
-	go build $(BUILD_FLAGS) -o build/bcnacli.exe ./cmd/bcnacli
+	go build $(BUILD_FLAGS) -o build/stand.exe ./cmd/stand
+	go build $(BUILD_FLAGS) -o build/stancli.exe ./cmd/stancli
 else
-	go build $(BUILD_FLAGS) -o build/bcnad ./cmd/bcnad
-	go build $(BUILD_FLAGS) -o build/bcnacli ./cmd/bcnacli
+	go build $(BUILD_FLAGS) -o build/stand ./cmd/stand
+	go build $(BUILD_FLAGS) -o build/stancli ./cmd/stancli
 endif
 
 build-linux:
 	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
 install:
-	go install $(BUILD_FLAGS) ./cmd/bcnad
-	go install $(BUILD_FLAGS) ./cmd/bcnacli
-	@statik -src=cmd/bcnacli/lcd/swagger-ui -dest=cmd/bcnacli/lcd -f
-	$(call go_install,rakyll,statik,v0.1.5)
+	go install $(BUILD_FLAGS) ./cmd/stand
+	go install $(BUILD_FLAGS) ./cmd/stancli
+#	@statik -src=./cmd/stancli/lcd/swagger-ui -dest=./cmd/stancli/lcd -f
+#	$(call go_install,rakyll,statik,v0.1.5)

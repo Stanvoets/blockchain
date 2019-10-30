@@ -9,12 +9,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (app *BcnaApp) assertRuntimeInvariants() {
+func (app *StanApp) assertRuntimeInvariants() {
 	ctx := app.NewContext(false, abci.Header{Height: app.LastBlockHeight() + 1})
 	app.assertRuntimeInvariantsOnContext(ctx)
 }
 
-func (app *BcnaApp) assertRuntimeInvariantsOnContext(ctx sdk.Context) {
+func (app *StanApp) assertRuntimeInvariantsOnContext(ctx sdk.Context) {
 	start := time.Now()
 	invarRoutes := app.crisisKeeper.Routes()
 	for _, ir := range invarRoutes {
